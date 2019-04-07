@@ -66,12 +66,16 @@ fn read_ethernet_packet(packet: &EthernetPacket) {
             let packet = Ipv4Packet::new(packet.payload());
             match packet {
                 Some(packet) => {
+                    let source_ip = packet.get_source();
                     match packet.get_next_level_protocol() {
                         IpNextHeaderProtocols::Tcp => {
                             let packet = TcpPacket::new(packet.payload());
                             match packet {
                                 Some(packet) => {
-                                    println!("{:?}",packet);
+                                    let port = packet.get_source();
+                                    if port == 443 || port == 80 || port == 8080 {
+                                        parse_http_packet(port,packet.payload());
+                                    }
                                 }
                                 _ => {}
                             }
@@ -80,8 +84,8 @@ fn read_ethernet_packet(packet: &EthernetPacket) {
                             let packet = UdpPacket::new(packet.payload());
                             match packet {
                                 Some(packet) => {
-                                    println!("{:?}",packet.get_source());
-                                    println!("{:?}",packet);
+                                    //println!("{:?}",packet.get_source());
+                                    //println!("{:?}",packet);
                                 }
                                 _ => {}
                             }
@@ -94,4 +98,10 @@ fn read_ethernet_packet(packet: &EthernetPacket) {
         }
         _ => {}
     }
+}
+
+fn parse_http_packet(port: u16,packet: &[u8]){
+    let s = packet.iter().map(|&s| s as char).collect::<String>();
+    println!("{:?}",packet);
+    println!("{:?}",s);
 }
