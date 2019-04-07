@@ -3,8 +3,11 @@ use pnet::datalink::{self, NetworkInterface};
 use pnet::datalink::Channel::Ethernet;
 use pnet::packet::{Packet, MutablePacket};
 use pnet::packet::arp::{ArpPacket,ArpOperation};
+use pnet::packet::tcp::{TcpPacket};
+use pnet::packet::udp::{UdpPacket};
 use pnet::packet::ethernet::{EthernetPacket,EtherTypes};
 use pnet::packet::ipv4::{Ipv4Packet};
+use pnet::packet::ip::{IpNextHeaderProtocols};
 use std::env;
 
 pub fn get_packet(){
@@ -63,8 +66,28 @@ fn read_ethernet_packet(packet: &EthernetPacket) {
             let packet = Ipv4Packet::new(packet.payload());
             match packet {
                 Some(packet) => {
-                    println!("{:?}",packet);
-                    println!("{:?}",packet.payload())
+                    match packet.get_next_level_protocol() {
+                        IpNextHeaderProtocols::Tcp => {
+                            let packet = TcpPacket::new(packet.payload());
+                            match packet {
+                                Some(packet) => {
+                                    println!("{:?}",packet);
+                                }
+                                _ => {}
+                            }
+                        }
+                        IpNextHeaderProtocols::Udp => {
+                            let packet = UdpPacket::new(packet.payload());
+                            match packet {
+                                Some(packet) => {
+                                    println!("{:?}",packet.get_source());
+                                    println!("{:?}",packet);
+                                }
+                                _ => {}
+                            }
+                        }
+                        _ => {}
+                    }
                 }
                 _ => {}
             }
